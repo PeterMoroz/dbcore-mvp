@@ -136,7 +136,7 @@ void LookupHelper(BPlusTree* bplus_tree, const std::vector<uint16_t>& keys,
 
 
 
-TEST(BPlusTreeConcurrentTest, DISABLED_InsertTest1)
+TEST(BPlusTreeConcurrentTest, InsertTest1)
 {
     constexpr uint32_t num_of_pages = 100;
     PagesManager pages_manager(num_of_pages);
@@ -193,7 +193,7 @@ TEST(BPlusTreeConcurrentTest, DISABLED_InsertTest1)
 
 }
 
-TEST(BPlusTreeConcurrentTest, DISABLED_InsertTest2)
+TEST(BPlusTreeConcurrentTest, InsertTest2)
 {
     constexpr uint32_t num_of_pages = 100;
     PagesManager pages_manager(num_of_pages);
@@ -248,7 +248,7 @@ TEST(BPlusTreeConcurrentTest, DISABLED_InsertTest2)
     EXPECT_EQ(current_key, keys.size() + 1);
 }
 
-TEST(BPlusTreeConcurrentTest, DISABLED_DeleteTest1)
+TEST(BPlusTreeConcurrentTest, DeleteTest1)
 {
     constexpr uint32_t num_of_pages = 5;
     PagesManager pages_manager(num_of_pages);
@@ -290,7 +290,7 @@ TEST(BPlusTreeConcurrentTest, DISABLED_DeleteTest1)
     EXPECT_EQ(size, (keys.size() - remove_keys.size()));
 }
 
-TEST(BPlusTreeConcurrentTest, DISABLED_DeleteTest2)
+TEST(BPlusTreeConcurrentTest, DeleteTest2)
 {
     constexpr uint32_t num_of_pages = 20;
     PagesManager pages_manager(num_of_pages);
@@ -332,7 +332,7 @@ TEST(BPlusTreeConcurrentTest, DISABLED_DeleteTest2)
     EXPECT_EQ(size, (keys.size() - remove_keys.size()));
 }
 
-TEST(BPlusTreeConcurrentTest, DISABLED_MixTest1)
+TEST(BPlusTreeConcurrentTest, MixTest1)
 {
     constexpr uint32_t num_of_pages = 20;
     PagesManager pages_manager(num_of_pages);
