@@ -3,6 +3,7 @@
 #include <dbcore/coretypes.h>
 #include <dbcore/page_guard.h>
 
+#include <list>
 #include <shared_mutex>
 
 #include <iostream>
@@ -141,6 +142,8 @@ private:
 private:
     void PrintTree(std::ostream& os, const BPlusTreePage* page, page_id_t page_id) const;
 
+    void GiveBackDroppedPages();
+
 
 private:
     PagesManager& _pages_manager;
@@ -150,6 +153,7 @@ private:
     uint16_t _leaf_max_size{0};
     uint16_t _internal_max_size{0};
     std::shared_mutex _mutex;
+    std::list<page_id_t> _dropped_pages;  // removed pages pending to give back to pages manager
 };
 
 }

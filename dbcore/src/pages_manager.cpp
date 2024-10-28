@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <memory>
 
+#include <iostream>
+
 using namespace dbcore;
 
 #define UNLIKELY(expr) __builtin_expect((expr), false)
@@ -30,7 +32,7 @@ PagesManager::~PagesManager()
         assert(ptr->_pin_count == 0);
         ptr->~Page();
     }
-
+  
     ::free(_pages);
     _pages = nullptr;
 }
@@ -91,6 +93,27 @@ bool PagesManager::UnpinPage(page_id_t page_id, bool is_dirty)
         page->_is_dirty = is_dirty;
         return true;
     }
+    return false;
+}
+
+bool PagesManager::GiveBackPage(page_id_t page_id)
+{
+    Page* page = GetPage(page_id);
+    if (page == nullptr)
+        return false;
+
+    if (page->_pin_count == 0) {
+        page->ResetData();
+        page->_page_id = INVALID_PAGE_ID;
+        page->_is_dirty = false;
+
+        std::lock_guard lg(_mutex);
+        _free_pages.insert(page_id);
+        _free_pages_list.push_back(page_id);
+
+        return true;
+    }
+
     return false;
 }
 

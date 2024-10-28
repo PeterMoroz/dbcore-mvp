@@ -224,8 +224,7 @@ void BPlusTree::Remove(const char* key)
 {
     const uint32_t k = *reinterpret_cast<const uint32_t *>(key);
 
-    // lock the whole tree now.
-    // TO DO: think about locking with page granularity
+    // lock the whole tree now
     std::unique_lock lock(_mutex);
 
     if (_root_page_id == INVALID_PAGE_ID) {
@@ -233,7 +232,6 @@ void BPlusTree::Remove(const char* key)
     }
 
     // const uint64_t k = *reinterpret_cast<const uint64_t *>(key);
-    // TO DO: when page becomes unused it has to be reclaimed by the PagesManager
 
     auto guard = _pages_manager.GetPageGuarded(_root_page_id);
 
@@ -258,6 +256,8 @@ void BPlusTree::Remove(const char* key)
             _root_page_id = child_id;
         }
     }
+
+    GiveBackDroppedPages();
 }
 
 bool BPlusTree::GetValue(const char* key, RID& value)
@@ -606,6 +606,16 @@ void BPlusTree::PrintTree(std::ostream& os, const BPlusTreePage* page, page_id_t
     }
 }
 
+void BPlusTree::GiveBackDroppedPages()
+{
+    for (const auto page_id : _dropped_pages) {
+        if (!_pages_manager.GiveBackPage(page_id)) {
+            std::cout << " give back page id " << page_id << " failed !" << std::endl;
+        }
+    }
+    _dropped_pages.clear();
+}
+
 void BPlusTree::Remove(BPlusTreePage* page, const char* key)
 {
     assert(!page->IsLeafPage());
@@ -660,6 +670,7 @@ void BPlusTree::Remove(BPlusTreePage* page, const char* key)
                 }
             }
             bplus_internal_page->RemoveAt(pos);
+            _dropped_pages.push_back(child_page_id);
             return;
         }
 
@@ -679,6 +690,7 @@ void BPlusTree::Remove(BPlusTreePage* page, const char* key)
                 if (right_page->GetSize() <= (right_page->GetMaxSize() / 2)) {
                     leaf_page->MergeRight(right_page);
                     bplus_internal_page->RemoveAt(right_pos);
+                    _dropped_pages.push_back(right_page_id);
                     return;
                 }
             }
@@ -692,6 +704,7 @@ void BPlusTree::Remove(BPlusTreePage* page, const char* key)
                 if (left_page->GetSize() <= (left_page->GetMaxSize() / 2)) {
                     left_page->MergeRight(leaf_page);
                     bplus_internal_page->RemoveAt(pos);
+                    _dropped_pages.push_back(child_page_id);
                     return;
                 }
             }
@@ -719,6 +732,7 @@ void BPlusTree::Remove(BPlusTreePage* page, const char* key)
                     // merge and update the key at the merge point
                     internal_page->MergeRight(right_page, leftmost_child->KeyAt(0));
                     bplus_internal_page->RemoveAt(right_pos);
+                    _dropped_pages.push_back(right_page_id);
                     return;
                 } else {
                     const uint16_t num_items_to_move = ((internal_page->GetMaxSize() / 2) - internal_page->GetSize());
@@ -754,8 +768,8 @@ void BPlusTree::Remove(BPlusTreePage* page, const char* key)
                     auto leftmost_child = leftmost_child_guard.As<BPlusTreeLeafPage>();
                     // merge and update the key at the merge point
                     left_page->MergeRight(internal_page, leftmost_child->KeyAt(0));
-                    // left_page->MergeRight(internal_page);
                     bplus_internal_page->RemoveAt(pos);
+                    _dropped_pages.push_back(child_page_id);
                     return;
                 } else {
                     const uint16_t num_items_to_move = ((internal_page->GetMaxSize() / 2) - internal_page->GetSize());

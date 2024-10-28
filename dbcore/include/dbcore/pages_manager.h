@@ -112,6 +112,16 @@ public:
     */
     WritePageGuard GetPageWrite(page_id_t page_id);
 
+    /**
+     * @brief give back page to list of free pages. should be used when the page is not needed anymore.
+     * the pin count of the page must be equal to 0, i.e. page isn't used by any thread.
+     * @param page_id id of the page
+     * @return false if the page page id is invalid, page is already freed or page still in use (pin count != 0),
+     * true when page is freed successfully
+    */
+    bool GiveBackPage(page_id_t page_id);
+    
+
 
 private:
     /** The number of pages */
