@@ -11,18 +11,6 @@
 namespace dbcore
 {
 
-// /**
-//  * The class provides the pages management: allocation, fetching, flushing etc. 
-//  * In fact all of the pages are kept in a pool of a fixed size. They could be 
-//  * read or written from/to an external storage with a StorageManager static interface,
-//  * provided as a template parameter.
-// */
-// template <typename StorageManager>
-// class PagesManager final
-// {
-
-// };
-
 /**
  * The class provides the pages management: allocation, fetching, flushing etc. 
  * In fact all of the pages are kept in a pool of a fixed size. 
