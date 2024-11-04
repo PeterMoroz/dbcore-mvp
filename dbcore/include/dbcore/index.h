@@ -11,11 +11,12 @@ namespace dbcore
 
 class Tuple;
 class RID;
+class PagesManager;
 
 enum class IndexType { BPlusTreeIndex, HashTableIndex };
 
 /**
- * IndexMetadata holds metadat of an index object.
+ * IndexMetadata holds metadata of an index object.
  * 
  * The object of metadata maintains the index schema and key attribute of an index,
  * since external caller doesn't know the actual structure of the index key, so it
@@ -25,15 +26,27 @@ enum class IndexType { BPlusTreeIndex, HashTableIndex };
 class IndexMetadata final
 {
 public:
-    IndexMetadata(uint32_t key_attrs[], uint32_t key_attrs_count, const Schema& schema);
+    IndexMetadata(uint32_t key_attrs[], uint32_t key_attrs_count, 
+                const Schema& key_schema, const Schema& tbl_schema);
+
+    const Schema& GetKeySchema() const { return _key_schema; }
+    const Schema& GetTableSchema() const { return _tbl_schema; }
+
+    uint32_t GetKeyAttrCount() const { return _key_attrs_count; }
+    const std::array<uint32_t, MAX_COLUMN_COUNT>& GetKeyAttributes() const
+    {
+        return _key_attrs;
+    }
 
 private:
     /** The mapping relation between key schema and tuple schema */
     std::array<uint32_t, MAX_COLUMN_COUNT> _key_attrs;
     /** The actual number of key attributes */
     uint32_t _key_attrs_count{0};
-    /** The schema of indexed key */
-    Schema _schema;
+    /** The schema of key */
+    Schema _key_schema;
+    /** The schema of table */
+    Schema _tbl_schema;
 };
 
 class Index
@@ -42,31 +55,31 @@ class Index
     Index& operator=(const Index&) = delete;
 
 public:
-    Index(IndexType type, const IndexMetadata& metadata);
+    Index(IndexType type, const IndexMetadata& metadata, PagesManager& pages_manager);
 
     ~Index();
 
-    /** Insert entry into the index 
-     * @param key The index key
-     * @param rid The RID associated with the key
+    /** Insert entry into the index
+     * @param tuple The indexed tuple
+     * @param rid The RID associated with the \ref tuple
      * @return whether insertion is successfull
     */
-    bool InsertEntry(const Tuple& key, const RID& rid);
+    bool InsertEntry(const Tuple& tuple, const RID& rid);
 
     /**
-     * Delete an index entry by key
-     * @param key The index key
+     * Delete an index entry matched the given tuple
+     * @param tuple The tuple to search and delete
     */
-    void DeleteEntry(const Tuple& key);
+    void DeleteEntry(const Tuple& tuple);
 
     /**
-     * Search the index for the provided key
-     * @param key The index key
+     * Search the index for the given tuple
+     * @param tuple The tuple to search
      * @param result The pointer to memory area where 
      * to write RID associated with key (if found)
      * @return whether key is found or not
     */
-    bool SearchEntry(const Tuple& key, RID* result) const;
+    bool SearchEntry(const Tuple& tuple, RID* result) const;
 
     /* TO DO: 
       implement ScanKey method which will populate the provided 
@@ -80,7 +93,7 @@ public:
     /** The type of the index */
     IndexType _type;
 
-    /** The Index object owns its metadata */
+    /** The index metadata, needed to make a key by the given tuple */
     IndexMetadata _metadata;
 
     /** Pointer (an owning) to concrete instance of index implementation which depends 

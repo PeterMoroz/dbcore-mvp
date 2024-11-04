@@ -78,7 +78,7 @@ public:
     /**
      * Search and return a value associated with a given key
     */
-    bool GetValue(const char* key, RID& rid);
+    bool GetValue(const char* key, RID& rid) const;
 
 
     void PrintTree(std::ostream& os) const;
@@ -152,7 +152,7 @@ private:
     page_id_t _root_page_id{INVALID_PAGE_ID};
     uint16_t _leaf_max_size{0};
     uint16_t _internal_max_size{0};
-    std::shared_mutex _mutex;
+    mutable std::shared_mutex _mutex;
     std::list<page_id_t> _dropped_pages;  // removed pages pending to give back to pages manager
 };
 

@@ -260,7 +260,7 @@ void BPlusTree::Remove(const char* key)
     GiveBackDroppedPages();
 }
 
-bool BPlusTree::GetValue(const char* key, RID& value)
+bool BPlusTree::GetValue(const char* key, RID& value) const
 {
     // lock the whole tree now.
     // TO DO: think about locking with page granularity

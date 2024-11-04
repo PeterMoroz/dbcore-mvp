@@ -77,6 +77,36 @@ public:
    */
    uint32_t GetLength() const { return _length; }
 
+   /**
+    * Generates a key tuple (subset of tuple's fields)
+    * @param schema - the tuple's schema
+    * @param key_schema - the key's schema
+    * @param key_attrs - the array of positions of key's attributes in tuple
+    * @param key_attr_count - the number of key attributes
+    * @return tuple of key attributes (subset of original tuple)
+   */
+   Tuple KeyFromTuple(const Schema& schema, const Schema& key_schema,
+            std::array<uint32_t, MAX_COLUMN_COUNT> key_attrs, uint32_t key_attr_count) const;
+
+
+    /**
+     * Get value of attribute (field) at specified position using a given scheme and tuple's data.
+     * @param schema - schema of tuple
+     * @param data - the pointer to tuple's data buffer
+     * @param idx - position of field in  the tuple
+     * @return value of the field at \ref idx
+    */
+    static Value GetValue(const Schema& schema, const char* data, uint32_t idx);
+
+private:
+    /**
+     * Get value of attribute (field) at specified position using a given scheme.
+     * @param schema - schema of tuple
+     * @param idx - position of field in  the tuple
+     * @return value of the field at \ref idx
+    */
+    Value GetValue(const Schema& schema, uint32_t idx) const;
+
 private:
     RID _rid{};
     char *_data{nullptr};

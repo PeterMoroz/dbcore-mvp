@@ -18,6 +18,7 @@ set(DBCORE_SRC
     src/b_plus_tree_leaf_page.cpp
     src/b_plus_tree_page.cpp
     src/b_plus_tree.cpp
+    src/b_plus_tree_index.cpp
     src/extendible_htable_bucket_page.cpp
     src/extendible_htable_header_page.cpp
     src/extendible_htable_directory_page.cpp)

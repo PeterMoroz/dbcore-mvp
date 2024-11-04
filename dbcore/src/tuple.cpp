@@ -145,3 +145,33 @@ Tuple& Tuple::operator=(Tuple &&other)
     }
     return *this;
 }
+
+Tuple Tuple::KeyFromTuple(const Schema& schema, const Schema& key_schema,
+            std::array<uint32_t, MAX_COLUMN_COUNT> key_attrs, uint32_t key_attr_count) const
+{
+    std::array<Value, MAX_COLUMN_COUNT> values;
+    for (uint32_t i = 0; i < key_attr_count; i++) {
+        values[i] = GetValue(schema, key_attrs[i]);
+    }
+
+    return {values, key_attr_count, key_schema};
+}
+
+Value Tuple::GetValue(const Schema& schema, const char* data, uint32_t idx)
+{
+    const auto& column = schema.GetColumnAt(idx);
+    const TypeId col_type = column.GetType();
+    if (column.IsInlined()) {
+        data += column.GetOffset();
+    } else {
+        const uint32_t offset = *reinterpret_cast<uint32_t *>(const_cast<char *>(data + column.GetOffset()));
+        data += offset;
+    }
+
+    return Value::DeserializeFrom(data, col_type);
+}
+
+Value Tuple::GetValue(const Schema& schema, uint32_t idx) const
+{
+    return GetValue(schema, GetData(), idx);
+}

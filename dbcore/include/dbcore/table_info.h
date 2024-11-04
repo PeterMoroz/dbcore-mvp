@@ -21,7 +21,9 @@ public:
     ~TableInfo();
 
 
-    const char* TableName() const { return _table_name; }
+    const char* GetTableName() const { return _table_name; }
+
+    TableHeap* GetTableHeap() { return _table_heap; }
 
 private:
     /** The table schema */

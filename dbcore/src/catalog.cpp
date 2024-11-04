@@ -104,7 +104,7 @@ IndexInfo* Catalog::CreateIndex(const char* index_name, const char* table_name, 
     }
 
     Schema key_schema{Schema::CopySchema(tbl_schema, key_attributes, num_of_key_attributes)};
-    IndexMetadata meta(key_attributes, num_of_key_attributes, key_schema);
+    IndexMetadata meta(key_attributes, num_of_key_attributes, key_schema, tbl_schema);
 
     Index *index = static_cast<Index *>(::malloc(sizeof(Index)));
     if (!index) {
@@ -117,9 +117,22 @@ IndexInfo* Catalog::CreateIndex(const char* index_name, const char* table_name, 
         return nullptr;
     }
 
-    new(index)Index(index_type, meta);
+    new(index)Index(index_type, meta, *_pages_manager);
 
-    // TO DO: iterate through the table and populate index
+
+    TableInfo* table_info = GetTable(table_name);
+    assert(table_info != nullptr);
+
+    TableHeap* table_heap = table_info->GetTableHeap();
+    assert(table_heap != nullptr);
+
+    auto itr = table_heap->MakeIterator(); 
+    while (!itr.IsEnd()) {
+        const auto [_, tuple] = itr.GetTuple();
+        const RID rid{itr.GetRID()};
+        index->InsertEntry(tuple, rid);
+        itr.Next();
+    }
 
     const auto index_oid = _next_index_oid.fetch_add(1);
 
@@ -162,7 +175,7 @@ IndexInfo* Catalog::GetIndex(const char* index_name, table_oid_t table_oid)
     if (it_tbl == _tables.cend()) {
         return nullptr;
     }
-    return GetIndex(index_name, it_tbl->second->TableName());
+    return GetIndex(index_name, it_tbl->second->GetTableName());
 }
 
 IndexInfo* Catalog::GetIndex(index_oid_t index_oid)
