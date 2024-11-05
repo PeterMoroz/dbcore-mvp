@@ -209,6 +209,10 @@ TEST(ExtendibleHTableTest, HeaderDirectoryPageSampleTest)
         }
 
 
+        directory_page->SetLocalDepth(0, 3);
+        directory_page->IncrGlobalDepth();
+        directory_page->SetBucketPageId(4, bucket_page_id_4);
+
         /*
          ===== Directory (global depth: 3) ====
          | bucket idx | page id | local depth |
