@@ -57,12 +57,20 @@ void ExtendibleHTableDirectoryPage::SetLocalDepth(uint32_t bucket_idx, uint8_t l
 
 void ExtendibleHTableDirectoryPage::IncrGlobalDepth()
 {
-
+    assert(_global_depth < _max_depth);
+    const uint32_t size = Size();
+    uint32_t hi_idx = size;
+    uint32_t lo_idx = 0;
+    for (; lo_idx < size; lo_idx++, hi_idx++) {
+        _local_depths[hi_idx] = _local_depths[lo_idx];
+        _bucket_page_ids[hi_idx] = _bucket_page_ids[lo_idx];
+    }
+    _global_depth++;
 }
 
 void ExtendibleHTableDirectoryPage::DecrGlobalDepth()
 {
-
+    _global_depth--;
 }
 
 bool ExtendibleHTableDirectoryPage::CanShrink() const
@@ -84,5 +92,41 @@ bool ExtendibleHTableDirectoryPage::CanShrink() const
 
 bool ExtendibleHTableDirectoryPage::VerifyIntegrity() const
 {
-    return false;
+    const uint32_t size = Size();
+
+    // check all LD <= GD
+    for (uint32_t i = 0; i < size; i++) {
+        if (!(_local_depths[i] <= _global_depth)) {
+            return false;
+        }
+    }
+
+    // check that LD is the same at each index with the same bucket_page_id
+    for (uint32_t i = 0; i < size - 1; i++) {
+        const page_id_t bucket_page_id = _bucket_page_ids[i];
+        const uint8_t ld = _local_depths[i];
+        for (uint32_t j = i + 1; j < size; j++) {
+            if (_bucket_page_ids[j] == bucket_page_id && _local_depths[j] != ld) {
+                return false;
+            }
+        }
+    }
+
+    // check that each bucket has precisely 2^(GD - LD) pointers pointing to it
+    for (uint32_t i = 0; i < size; i++) {
+        const page_id_t bucket_page_id = _bucket_page_ids[i];
+        const uint16_t expected_count = 1 << (_global_depth - _local_depths[i]);
+        uint16_t actual_count = 0;
+        for (uint32_t j = 0; j < size; j++) {
+            if (_bucket_page_ids[j] == bucket_page_id) {
+                actual_count++;
+            }
+        }
+
+        if (actual_count != expected_count) {
+            return false;
+        }
+    }
+
+    return true;
 }
