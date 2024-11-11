@@ -10,6 +10,9 @@
 namespace dbcore
 {
     static constexpr uint32_t HTABLE_BUCKET_VALUE_SIZE = sizeof(RID);
+
+    static_assert(std::is_standard_layout<RID>::value == true);
+    static_assert(std::is_trivially_copyable<RID>::value == true);
 }
 
 using namespace dbcore;
@@ -19,9 +22,6 @@ void ExtendibleHTableBucketPage::Init(uint32_t key_size)
     _key_size = key_size;
     _num_items = 0;
     _max_num_items = MaxNumItems(key_size);
-
-    static_assert(std::is_standard_layout<RID>::value == true);
-    static_assert(std::is_trivially_copyable<RID>::value == true);
 
     ::memset(_data, 0, HTABLE_BUCKET_PAGE_DATA_SIZE);
 }
@@ -39,17 +39,15 @@ uint32_t ExtendibleHTableBucketPage::MaxNumItems(uint32_t key_size)
     return (HTABLE_BUCKET_PAGE_DATA_SIZE / (key_size + HTABLE_BUCKET_VALUE_SIZE));
 }
 
-bool ExtendibleHTableBucketPage::Insert(const char* key, uint32_t key_size, const TupleCompare& cmp, const RID& rid)
+bool ExtendibleHTableBucketPage::Insert(const char* key, const TupleCompare& cmp, const RID& rid)
 {
-    assert(_key_size == key_size);
-
     const uint32_t item_size = _key_size + sizeof(RID);
 
     if (_num_items < _max_num_items) {
         if (_num_items == 0) {
             char* dst = _data;
-            ::memcpy(dst, key, key_size);
-            dst += key_size;
+            ::memcpy(dst, key, _key_size);
+            dst += _key_size;
             ::memcpy(dst, &rid, sizeof(RID));
             _num_items++;
             return true;
@@ -69,8 +67,8 @@ bool ExtendibleHTableBucketPage::Insert(const char* key, uint32_t key_size, cons
                 ::memcpy(dst, src, item_size);
             }
             char* dst = _data;
-            ::memcpy(dst, key, key_size);
-            dst += key_size;
+            ::memcpy(dst, key, _key_size);
+            dst += _key_size;
             ::memcpy(dst, &rid, sizeof(RID));
             _num_items++;
             return true;
@@ -83,15 +81,15 @@ bool ExtendibleHTableBucketPage::Insert(const char* key, uint32_t key_size, cons
             return false;   // already exist
         } else if (cmp_result == 1) {
             char* dst = _data + _num_items * item_size;
-            ::memcpy(dst, key, key_size);
-            dst += key_size;
+            ::memcpy(dst, key, _key_size);
+            dst += _key_size;
             ::memcpy(dst, &rid, sizeof(RID));
             _num_items++;
             return true;
         }
 
         uint32_t pos_to_insert = _num_items;
-        if (bsearch(key, key_size, cmp, &pos_to_insert)) {
+        if (bsearch(key, cmp, &pos_to_insert)) {
             return false;
         } else {
             uint32_t idx = _num_items;
@@ -102,8 +100,8 @@ bool ExtendibleHTableBucketPage::Insert(const char* key, uint32_t key_size, cons
                 ::memcpy(dst, src, item_size);
             }
             char* dst = _data + pos_to_insert * item_size;
-            ::memcpy(dst, key, key_size);
-            dst += key_size;
+            ::memcpy(dst, key, _key_size);
+            dst += _key_size;
             ::memcpy(dst, &rid, sizeof(RID));
             _num_items++;
             return true;
@@ -112,10 +110,8 @@ bool ExtendibleHTableBucketPage::Insert(const char* key, uint32_t key_size, cons
     return false;
 }
 
-bool ExtendibleHTableBucketPage::Remove(const char* key, uint32_t key_size, const TupleCompare& cmp)
+bool ExtendibleHTableBucketPage::Remove(const char* key, const TupleCompare& cmp)
 {
-    assert(_key_size == key_size);
-
     const uint32_t item_size = _key_size + sizeof(RID);
 
     if (_num_items != 0) {
@@ -141,7 +137,7 @@ bool ExtendibleHTableBucketPage::Remove(const char* key, uint32_t key_size, cons
         }
 
         uint32_t pos_to_remove = _num_items;
-        if (bsearch(key, key_size, cmp, &pos_to_remove)) {
+        if (bsearch(key, cmp, &pos_to_remove)) {
             _num_items--;
             uint32_t idx = pos_to_remove;
             while (idx < _num_items) {
@@ -156,15 +152,28 @@ bool ExtendibleHTableBucketPage::Remove(const char* key, uint32_t key_size, cons
     return false;
 }
 
-bool ExtendibleHTableBucketPage::Lookup(const char* key, uint32_t key_size, const TupleCompare& cmp, RID& rid) const
+void ExtendibleHTableBucketPage::RemoveAt(uint32_t idx)
 {
-    assert(_key_size == key_size);
+    if (_num_items > 0 && idx < _num_items) {
+        const uint32_t item_size = _key_size + sizeof(RID);
+        uint32_t i = idx;
+        while (i < _num_items - 1) {
+            char* dst = _data + i * item_size;
+            i += 1;
+            const char* src = _data + i * item_size;
+            ::memcpy(dst, src, item_size);
+        }
+        _num_items--;
+    }
+}
 
+bool ExtendibleHTableBucketPage::Lookup(const char* key, const TupleCompare& cmp, RID& rid) const
+{
     const uint32_t item_size = _key_size + sizeof(RID);
 
     if (_num_items != 0) {
         uint32_t pos = _num_items;
-        if (bsearch(key, key_size, cmp, &pos)) {
+        if (bsearch(key, cmp, &pos)) {
             const char* src = _data + pos * item_size + _key_size;
             ::memcpy(&rid, src, sizeof(rid));
             return true;
@@ -173,9 +182,27 @@ bool ExtendibleHTableBucketPage::Lookup(const char* key, uint32_t key_size, cons
     return false;
 }
 
-bool ExtendibleHTableBucketPage::bsearch(const char* key, uint32_t key_size, const TupleCompare& cmp, uint32_t* pos) const
+const char* ExtendibleHTableBucketPage::KeyAt(uint32_t idx) const
 {
-    const uint32_t item_size = _key_size + sizeof(RID);    
+    const uint32_t item_size = _key_size + sizeof(RID);
+    const uint32_t offset = item_size * idx;
+    const char* key = _data + offset;
+    return key;
+}
+
+RID ExtendibleHTableBucketPage::ValueAt(uint32_t idx) const
+{
+    RID rid;
+    const uint32_t item_size = _key_size + sizeof(RID);
+    const uint32_t offset = item_size * idx;
+    const char* value = _data + offset + _key_size;
+    ::mempcpy(&rid, value, sizeof(RID));
+    return rid;
+}
+
+bool ExtendibleHTableBucketPage::bsearch(const char* key, const TupleCompare& cmp, uint32_t* pos) const
+{
+    const uint32_t item_size = _key_size + sizeof(RID);
     uint32_t l = 0, r = _num_items - 1;
     while (l <= r) {
         uint32_t m = l + (r - l) / 2;

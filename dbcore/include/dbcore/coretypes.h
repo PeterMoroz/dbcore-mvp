@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <limits>
+#include <type_traits>
 
 
 namespace dbcore
@@ -39,5 +40,8 @@ static constexpr index_oid_t INVALID_INDEX_OID = std::numeric_limits<index_oid_t
 
 static constexpr size_t MAX_TABLE_NAME_SIZE = 64;
 static constexpr size_t MAX_INDEX_NAME_SIZE = 64;
+
+
+using hash_function_ptr_t = std::add_pointer<uint32_t(const void *, size_t)>::type;
 
 }

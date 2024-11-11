@@ -30,7 +30,7 @@ public:
    bool IsInlined() const { return _column_count == _uninlined_count; }
 
    /**
-    * @return the number of bytes usedby one tuple
+    * @return the number of bytes used by one tuple
    */
   uint32_t GetInlinedStorageSize() const { return _length; }
 

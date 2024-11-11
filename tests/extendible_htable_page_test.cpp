@@ -43,7 +43,7 @@ TEST(ExtendibleHTableTest, BucketPageSampleTest)
         Value values[] = { Value{TypeId::BIGINT, static_cast<int64_t>(i)} };
         Tuple tuple{values, 1, schema};
         RID rid{i, i};
-        ASSERT_TRUE(bucket_page->Insert(tuple.GetData(), tuple.GetLength(), key_cmp, rid));
+        ASSERT_TRUE(bucket_page->Insert(tuple.GetData(), key_cmp, rid));
     }
 
     {
@@ -53,7 +53,7 @@ TEST(ExtendibleHTableTest, BucketPageSampleTest)
 
         // bucket is full, no more insert allowed
         ASSERT_TRUE(bucket_page->IsFull());
-        ASSERT_FALSE(bucket_page->Insert(tuple.GetData(), tuple.GetLength(), key_cmp, rid));
+        ASSERT_FALSE(bucket_page->Insert(tuple.GetData(), key_cmp, rid));
     }
 
     // check inserted values
@@ -61,7 +61,7 @@ TEST(ExtendibleHTableTest, BucketPageSampleTest)
         Value values[] = { Value{TypeId::BIGINT, static_cast<int64_t>(i)} };
         Tuple tuple{values, 1, schema};
         RID rid;
-        ASSERT_TRUE(bucket_page->Lookup(tuple.GetData(), tuple.GetLength(), key_cmp, rid));
+        ASSERT_TRUE(bucket_page->Lookup(tuple.GetData(), key_cmp, rid));
         ASSERT_EQ(rid, RID(i, i));
     }
 
@@ -70,7 +70,7 @@ TEST(ExtendibleHTableTest, BucketPageSampleTest)
         if (i % 2 == 1) {
             Value values[] = { Value{TypeId::BIGINT, static_cast<int64_t>(i)} };
             Tuple tuple{values, 1, schema};
-            ASSERT_TRUE(bucket_page->Remove(tuple.GetData(), tuple.GetLength(), key_cmp));
+            ASSERT_TRUE(bucket_page->Remove(tuple.GetData(), key_cmp));
         }
     }
 
@@ -79,9 +79,9 @@ TEST(ExtendibleHTableTest, BucketPageSampleTest)
         Value values[] = { Value{TypeId::BIGINT, static_cast<int64_t>(i)} };
         Tuple tuple{values, 1, schema};
         if (i % 2 == 1) {
-            ASSERT_FALSE(bucket_page->Remove(tuple.GetData(), tuple.GetLength(), key_cmp));
+            ASSERT_FALSE(bucket_page->Remove(tuple.GetData(), key_cmp));
         } else {
-            ASSERT_TRUE(bucket_page->Remove(tuple.GetData(), tuple.GetLength(), key_cmp));
+            ASSERT_TRUE(bucket_page->Remove(tuple.GetData(), key_cmp));
         }
     }
 

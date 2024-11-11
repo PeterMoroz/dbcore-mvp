@@ -5,6 +5,13 @@
 namespace dbcore
 {
 
+/**
+ * DirectoryPage format:
+ *  -----------------------------------------------------------------------------------------------------
+ * | MaxDepth(4) | GlobalDepth(4) | LocalDepths(512) | BucketPageIds(2048) | Free (depends on page size) |
+ *  -----------------------------------------------------------------------------------------------------
+*/
+
 class ExtendibleHTableDirectoryPage final
 {
     ExtendibleHTableDirectoryPage(const ExtendibleHTableDirectoryPage&) = delete;
@@ -40,6 +47,13 @@ public:
     void SetBucketPageId(uint32_t bucket_idx, page_id_t bucket_page_id);
 
     /**
+     * Get the split image of an index
+     * @param bucket_idx the directory index for which to find the split image
+     * @return the directory index of the split image
+    */
+    uint32_t GetSplitImageIndex(uint32_t bucket_idx);
+
+    /**
      * Get the local depth of the bucket with given index
      * @param bucket_idx the index of bucket to get depth
      * @return the value of bucket's depth
@@ -54,6 +68,18 @@ public:
     void SetLocalDepth(uint32_t bucket_idx, uint8_t local_depth);
 
     /**
+     * Increment the local depth of the bucket at bucket_idx
+     * @param bucket_idx bucket index to increment
+    */
+    void IncrLocalDepth(uint32_t bucket_idx);
+
+    /**
+     * Decrement the local depth of the bucket at bucket_idx
+     * @param bucket_idx bucket index to decrement
+    */
+    void DecrLocalDepth(uint32_t bucket_idx);
+
+    /**
      * Increment the global depth of the directory
     */
     void IncrGlobalDepth();
@@ -64,6 +90,15 @@ public:
     void DecrGlobalDepth();
 
     /**
+     * Get the global depth of the hash table directory
+     * @return the global depth of the directory
+    */
+    uint32_t GetGlobalDepth() const;
+
+    uint32_t GetMaxDepth() const;
+
+
+    /**
      * @return true if the directory can shrunk
     */
     bool CanShrink() const;
@@ -71,10 +106,10 @@ public:
     /**
      * @return the current directory size
     */
-    uint32_t Size() const { return (1 << _global_depth); }
+    uint32_t Size() const;
 
     /**
-     * Verify the folloing invariants:
+     * Verify the following invariants:
      * 1. all local_depth <= global_depth
      * 2. each bucket has precisely 2 ^ (global_depth - local_depth) pointer pointing to it
      * 3. the local_depth is the same at each index with the same bucket_page_id

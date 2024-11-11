@@ -43,6 +43,13 @@ void ExtendibleHTableDirectoryPage::SetBucketPageId(uint32_t bucket_idx, page_id
     _bucket_page_ids[bucket_idx] = bucket_page_id;
 }
 
+uint32_t ExtendibleHTableDirectoryPage::GetSplitImageIndex(uint32_t bucket_idx)
+{
+    assert(bucket_idx < HTABLE_DIRECTORY_ARRAY_SIZE);
+    const uint8_t depth = _local_depths[bucket_idx];
+    return bucket_idx ^ (1 << (depth - 1));
+}
+
 uint32_t ExtendibleHTableDirectoryPage::GetLocalDepth(uint32_t bucket_idx) const
 {
     assert(bucket_idx < HTABLE_DIRECTORY_ARRAY_SIZE);
@@ -68,9 +75,32 @@ void ExtendibleHTableDirectoryPage::IncrGlobalDepth()
     _global_depth++;
 }
 
+void ExtendibleHTableDirectoryPage::IncrLocalDepth(uint32_t bucket_idx)
+{
+    assert(bucket_idx < HTABLE_DIRECTORY_ARRAY_SIZE);
+    _local_depths[bucket_idx]++;
+}
+
+void ExtendibleHTableDirectoryPage::DecrLocalDepth(uint32_t bucket_idx)
+{
+    assert(bucket_idx < HTABLE_DIRECTORY_ARRAY_SIZE);
+    _local_depths[bucket_idx]--;
+}
+
 void ExtendibleHTableDirectoryPage::DecrGlobalDepth()
 {
+    assert(_global_depth > 0);
     _global_depth--;
+}
+
+uint32_t ExtendibleHTableDirectoryPage::GetGlobalDepth() const
+{
+    return _global_depth;
+}
+
+uint32_t ExtendibleHTableDirectoryPage::GetMaxDepth() const
+{
+    return _max_depth;
 }
 
 bool ExtendibleHTableDirectoryPage::CanShrink() const
@@ -88,6 +118,11 @@ bool ExtendibleHTableDirectoryPage::CanShrink() const
         }
     }
     return true;
+}
+
+uint32_t ExtendibleHTableDirectoryPage::Size() const 
+{ 
+    return (1 << _global_depth); 
 }
 
 bool ExtendibleHTableDirectoryPage::VerifyIntegrity() const

@@ -2,6 +2,7 @@ set(DBCORE_SRC
     src/column.cpp
     src/catalog.cpp
     src/index.cpp
+    src/hash.cpp
     src/schema.cpp
     src/tuple.cpp
     src/value.cpp
@@ -12,6 +13,7 @@ set(DBCORE_SRC
     src/table_info.cpp
     src/table_page.cpp
     src/tuple_compare.cpp
+    src/tuple_hash.cpp
     src/table_iterator.cpp
     src/pages_manager.cpp
     src/b_plus_tree_internal_page.cpp
@@ -19,6 +21,7 @@ set(DBCORE_SRC
     src/b_plus_tree_page.cpp
     src/b_plus_tree.cpp
     src/b_plus_tree_index.cpp
+    src/extendible_hash_table.cpp
     src/extendible_htable_bucket_page.cpp
     src/extendible_htable_header_page.cpp
     src/extendible_htable_directory_page.cpp)

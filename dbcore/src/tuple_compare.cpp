@@ -35,6 +35,8 @@ TupleCompare::TupleCompare(const Schema& schema)
 
 int TupleCompare::operator()(const char* lhs, const char* rhs) const
 {
+    // TO DO: check case when one or both values are null
+    // It might be needed redesign the interface and usage of this class
     const uint32_t col_count = _schema.GetColumnCount();
     for (uint32_t i = 0; i < col_count; i++) {
         const Value lhs_value = Tuple::GetValue(_schema, lhs, i);
