@@ -22,6 +22,7 @@ set(DBCORE_SRC
     src/b_plus_tree.cpp
     src/b_plus_tree_index.cpp
     src/extendible_hash_table.cpp
+    src/extendible_hash_table_index.cpp
     src/extendible_htable_bucket_page.cpp
     src/extendible_htable_header_page.cpp
     src/extendible_htable_directory_page.cpp)
