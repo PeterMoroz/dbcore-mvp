@@ -2,6 +2,8 @@
 
 #include <dbcore/coretypes.h>
 
+#include <shared_mutex>
+
 namespace dbcore
 {
 
@@ -93,6 +95,7 @@ private:
     uint32_t _directory_max_depth{0};
     uint32_t _bucket_max_size{0};
     page_id_t _header_page_id{INVALID_PAGE_ID};
+    mutable std::shared_mutex _mutex;
 };
 
 }

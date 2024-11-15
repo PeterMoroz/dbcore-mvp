@@ -48,6 +48,10 @@ ExtendibleHashTable::~ExtendibleHashTable()
 
 bool ExtendibleHashTable::Insert(const char* key, const RID& rid)
 {
+    // lock the whole tree now.
+    // TO DO: think about locking with page granularity
+    std::unique_lock lock(_mutex);
+
     auto header_guard = _pages_manager.GetPageWrite(_header_page_id);
     auto header_page = header_guard.AsMut<ExtendibleHTableHeaderPage>();
     const uint32_t hash = _key_hash(key);
@@ -60,6 +64,9 @@ bool ExtendibleHashTable::Insert(const char* key, const RID& rid)
 
 bool ExtendibleHashTable::Remove(const char *key)
 {
+    // lock the whole tree now.
+    std::unique_lock lock(_mutex);
+
     ReadPageGuard header_guard = _pages_manager.GetPageRead(_header_page_id);
     auto header_page = header_guard.As<ExtendibleHTableHeaderPage>();
     const uint32_t hash = _key_hash(key);
@@ -101,6 +108,10 @@ bool ExtendibleHashTable::Remove(const char *key)
 
 bool ExtendibleHashTable::GetValue(const char* key, RID& rid) const
 {
+    // lock the whole tree now.
+    // TO DO: think about locking with page granularity
+    std::shared_lock lock(_mutex);
+
     auto header_guard = _pages_manager.GetPageRead(_header_page_id);
     auto header_page = header_guard.As<ExtendibleHTableHeaderPage>();
 
@@ -251,6 +262,5 @@ bool ExtendibleHashTable::InsertToBucket(ExtendibleHTableBucketPage *bucket, Ext
 
     }
 
-    assert(false);  // should be unreachable
     return false;
 }
