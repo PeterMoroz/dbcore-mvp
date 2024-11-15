@@ -15,6 +15,7 @@ add_executable(pages_manager_test pages_manager_test.cpp)
 add_executable(page_guard_test page_guard_test.cpp)
 add_executable(extendible_htable_page_test extendible_htable_page_test.cpp)
 add_executable(extendible_htable_test extendible_htable_test.cpp)
+add_executable(extendible_htable_concurrent_test extendible_htable_concurrent_test.cpp)
 add_executable(b_plus_tree_insert_test b_plus_tree_insert_test.cpp)
 add_executable(b_plus_tree_delete_test b_plus_tree_delete_test.cpp)
 add_executable(b_plus_tree_sequential_scale_test b_plus_tree_sequential_scale_test.cpp)
@@ -26,6 +27,7 @@ target_link_libraries(pages_manager_test PRIVATE GTest::GTest dbcore)
 target_link_libraries(page_guard_test PRIVATE GTest::GTest dbcore)
 target_link_libraries(extendible_htable_page_test PRIVATE GTest::GTest dbcore)
 target_link_libraries(extendible_htable_test PRIVATE GTest::GTest dbcore)
+target_link_libraries(extendible_htable_concurrent_test PRIVATE GTest::GTest dbcore)
 target_link_libraries(b_plus_tree_insert_test PRIVATE GTest::GTest dbcore)
 target_link_libraries(b_plus_tree_delete_test PRIVATE GTest::GTest dbcore)
 target_link_libraries(b_plus_tree_sequential_scale_test PRIVATE GTest::GTest dbcore)
@@ -33,5 +35,5 @@ target_link_libraries(b_plus_tree_concurrent_test PRIVATE GTest::GTest dbcore)
 
 
 add_test(dbcore_gtests tuple_test rwlatch_test pages_manager_test page_guard_test 
-		extendible_htable_page_test extendible_htable_test
+		extendible_htable_page_test extendible_htable_test extendible_htable_concurrent_test
 		b_plus_tree_insert_test b_plus_tree_delete_test b_plus_tree_sequential_scale_test b_plus_tree_concurrent_test)
